@@ -1,0 +1,13 @@
+
+**** Build of configuration Release for project hw1_new ****
+
+Nothing to build for project hw1_new
+
+Invoking autoreconf in build directory: /home/compm/Desktop/computer arch/CA_Wet1/hw1_new/
+
+sh -c "autoreconf -i" 
+sh: 1: autoreconf: not found
+
+Configuration failed with error
+Build stopped
+()

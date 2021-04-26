@@ -1,0 +1,6 @@
+23:40:22 **** Build of configuration Build (GNU) for project hw1 ****
+make all 
+make: *** No rule to make target 'all'.  Stop.
+
+23:40:26 Build Finished (took 3s.303ms)
+

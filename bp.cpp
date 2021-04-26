@@ -4,74 +4,123 @@
 #include "bp_api.hpp"
 #define VALID_BIT 1
 #define TARGET_SIZE 32
+class btb_entry
+{
+public:
+	int valid;
+	int tag;
+	int target;
+};
 
-class BranchPred {
+class BranchPred
+{
+	bool isGlobalTable;
+	bool isGlobalHist;
+	int Shared;
 
-	int ** btbTable;
-	int ** historyTable;
-	int ** FsmStateTable;
+	int totalSize;
+
+	btb_entry *btbTable;
+	int *historyTable;
+	int **FsmStateTable;
 	int btbEntrySize;
 	int historyTableSize;
 	int FsmTableSize;
 
 public:
-
 	BranchPred(unsigned btbSize, unsigned historySize, unsigned tagSize,
-			unsigned fsmState,
-			bool isGlobalHist, bool isGlobalTable, int Shared) {
-		if (!isGlobalHist && !isGlobalTable) {
-			btbTable = new int[btbSize][tagSize + VALID_BIT + TARGET_SIZE];
-			historyTable = new int[btbSize][historySize];
-			FsmTableSize = new int[btbSize][2 ^ (historySize + 1)];
-		}
-		if (isGlobalHist && !isGlobalTable) {
-			btbTable = new int[btbSize][tagSize + VALID_BIT + TARGET_SIZE];
-			historyTable = new int[1][historySize];
-			FsmTableSize = new int[btbSize][2 ^ (historySize + 1)];
-		}
-		if (!isGlobalHist && isGlobalTable) {
-			btbTable = new int[btbSize][tagSize + VALID_BIT + TARGET_SIZE];
-			historyTable = new int[btbSize][historySize];
-			FsmTableSize = new int[1][2 ^ (historySize + 1)];
-		}
-		if (isGlobalHist && isGlobalTable) {
-			btbTable = new int[btbSize][tagSize + VALID_BIT + TARGET_SIZE];
-			historyTable = new int[1][historySize];
-			FsmTableSize = new int[1][2 ^ (historySize + 1)];
-		}
+			   unsigned fsmState,
+			   bool isGlobalHist, bool isGlobalTable, int Shared)
+	{
+		this->isGlobalTable=isGlobalTable;
+		this->isGlobalHist=isGlobalHist;
+		this->Shared=Shared;
+		
+
+		if (!isGlobalHist && !isGlobalTable)
+		{
+			btbTable = new btb_entry[btbSize];
+			
+			historyTable = new int[btbSize];
+			
+			FsmStateTable = new int *[btbSize];
+			for (int i = 0; i < btbSize; i++)
+			{
+				FsmStateTable[i] = new int[2 ^ historySize];
 			}
+		}
+
+		if (isGlobalHist && !isGlobalTable)
+		{
+			btbTable = new btb_entry[btbSize];
+			
+			historyTable = new int[1];
+
+			FsmStateTable = new int *[btbSize];
+			for (int i = 0; i < btbSize; i++)
+			{
+				FsmStateTable[i] = new int[2 ^ historySize];
+			}
+		}
+		if (!isGlobalHist && isGlobalTable)
+		{
+			btbTable = new btb_entry[btbSize];
+
+			historyTable = new int[btbSize];
+
+			FsmStateTable = new int *[1];
+			FsmStateTable[0] = new int[2 ^ historySize];
+		}
+		if (isGlobalHist && isGlobalTable)
+		{
+			btbTable = new btb_entry[btbSize];
+
+			historyTable = new int[1];
+
+			FsmStateTable = new int *[1];
+			FsmStateTable[0] = new int[2 ^ historySize];
+		}
+	}
 };
 
-class L_H_L_T_BP: public BranchPred {
+/*class L_H_L_T_BP : public BranchPred
+{
+	L_H_L_T_BP(unsigned btbSize, unsigned historySize, unsigned tagSize,
+			   unsigned fsmState,
+			   bool isGlobalHist, bool isGlobalTable, int Shared){
 
-};
+			   }
+};*/
 
-BranchPred * global_branch_pred = nullptr;
+BranchPred *global_branch_pred;
 
 int BP_init(unsigned btbSize, unsigned historySize, unsigned tagSize,
-		unsigned fsmState,
-		bool isGlobalHist, bool isGlobalTable, int Shared) {
+			unsigned fsmState,
+			bool isGlobalHist, bool isGlobalTable, int Shared)
+{
 
 	global_branch_pred = new BranchPred(btbSize, historySize, tagSize, fsmState,
-			isGlobalHist, isGlobalTable, Shared);
-	global_branch_pred->init_btbTable(btbSize, historySize, tagSize, fsmState,
-			isGlobalHist, isGlobalTable, Shared);
+										isGlobalHist, isGlobalTable, Shared);
 
-	if (!isGlobalHist && !isGlobalTable)
-		global_branch_pred = new L_H_L_T_BP;
+
+	// if (!isGlobalHist && !isGlobalTable)
+	// 	global_branch_pred = new L_H_L_T_BP(btbSize, historySize, tagSize, fsmState,
+	// 									isGlobalHist, isGlobalTable, Shared);
 
 	return -1;
 }
 
-bool BP_predict(uint32_t pc, uint32_t *dst) {
+bool BP_predict(uint32_t pc, uint32_t *dst)
+{
 	return false;
 }
 
-void BP_update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst) {
+void BP_update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst)
+{
 	return;
 }
 
-void BP_GetStats(SIM_stats *curStats) {
+void BP_GetStats(SIM_stats *curStats)
+{
 	return;
 }
-
