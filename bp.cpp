@@ -19,16 +19,6 @@ public:
 	BranchPred(unsigned btbSize, unsigned historySize, unsigned tagSize,
 			unsigned fsmState,
 			bool isGlobalHist, bool isGlobalTable, int Shared) {
-		btbTable = nullptr;
-		historyTable = nullptr;
-		FsmStateTable = nullptr;
-		btbEntrySize = 0;
-		historyTableSize = 0;
-		FsmTableSize = 0;
-	}
-	void init_btbTable(unsigned btbSize, unsigned historySize, unsigned tagSize,
-			unsigned fsmState,
-			bool isGlobalHist, bool isGlobalTable, int Shared) {
 		if (!isGlobalHist && !isGlobalTable) {
 			btbTable = new int[btbSize][tagSize + VALID_BIT + TARGET_SIZE];
 			historyTable = new int[btbSize][historySize];
@@ -49,8 +39,7 @@ public:
 			historyTable = new int[1][historySize];
 			FsmTableSize = new int[1][2 ^ (historySize + 1)];
 		}
-	}
-
+			}
 };
 
 class L_H_L_T_BP: public BranchPred {
@@ -63,7 +52,8 @@ int BP_init(unsigned btbSize, unsigned historySize, unsigned tagSize,
 		unsigned fsmState,
 		bool isGlobalHist, bool isGlobalTable, int Shared) {
 
-	global_branch_pred = new BranchPred;
+	global_branch_pred = new BranchPred(btbSize, historySize, tagSize, fsmState,
+			isGlobalHist, isGlobalTable, Shared);
 	global_branch_pred->init_btbTable(btbSize, historySize, tagSize, fsmState,
 			isGlobalHist, isGlobalTable, Shared);
 
