@@ -5,7 +5,6 @@
 #include "math.h"
 #include <stdio.h>
 
-
 #define VALID_BIT 1
 #define TARGET_SIZE 30
 
@@ -111,7 +110,7 @@ public:
 		this->isGlobalTable = isGlobalTable;
 		this->isGlobalHist = isGlobalHist;
 		this->Shared = Shared;
-		this->fsmDefault=fsmDefault;
+		this->fsmDefault = fsmDefault;
 		totalSize = calcTotalSize(btbSize, historySize, tagSize,
 								  isGlobalHist, isGlobalTable);
 
@@ -164,16 +163,18 @@ public:
 	void addBtbEntry(uint32_t tag, uint32_t *dst, int btb_index)
 	{
 		btbTable[btb_index].tag = tag;
-		btbTable[btb_index].valid=1;
-		btbTable[btb_index].target= *dst;
+		btbTable[btb_index].valid = 1;
+		btbTable[btb_index].target = *dst;
 
 		if (!isGlobalHist)
 		{
-			historyTable[btb_index]=0;
+			historyTable[btb_index] = 0;
 		}
-		if(!isGlobalTable){
-			for(int i=0;i<pow(2,historySize);i++){
-				FsmStateTable[btb_index][i]=fsmDefault;
+		if (!isGlobalTable)
+		{
+			for (int i = 0; i < pow(2, historySize); i++)
+			{
+				FsmStateTable[btb_index][i] = fsmDefault;
 			}
 		}
 	}
@@ -196,12 +197,17 @@ public:
 			shareValue = pc >> 16;									   //remove 16 lower bits.
 			shareValue = shareValue % (unsigned(pow(2, historySize))); //take the lowest |history| bits
 		}
+		printf("btb index is: %d ' valid? = %d \n", btb_index, btbTable[btb_index].valid);
 
 		if (btbTable[btb_index].valid == 0 || btbTable[btb_index].tag != getTagFromPc(pc))
 		{ //check if entry is valid
+		printf("adding new btb entry for: %d \n", pc);
 			*dst = pc + 4;
-			return false; //TODO: do we replace btb entry with new brach if they have a different tag ??
+			 //TODO: do we replace btb entry with new brach if they have a different tag ??
+			
+
 			addBtbEntry(getTagFromPc(pc), dst, btb_index);
+			return false;
 			//TODO: update btb table
 		}
 
@@ -274,7 +280,7 @@ int BP_init(unsigned btbSize, unsigned historySize, unsigned tagSize,
 bool BP_predict(uint32_t pc, uint32_t *dst)
 {
 	unsigned btb_entry = pc;
-	
+
 	return global_branch_pred->predict(pc, dst);
 }
 
