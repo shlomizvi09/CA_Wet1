@@ -12,6 +12,7 @@ public:
 	int target;
 };
 
+
 class BranchPred
 {
 	bool isGlobalTable;
