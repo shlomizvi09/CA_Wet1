@@ -10,17 +10,20 @@
 
 void initFsmTable(unsigned btbSize, unsigned fsmState, bool isGlobalTable, bool historySize, unsigned **FsmStateTable)
 {
+	//printf("in initFsmTable function. initializing all values to: %d \n", fsmState);
 	if (isGlobalTable)
 	{
-		for (int i = 0; i < pow(2, historySize); i++)
+		for (int i = 0; i < pow(2, historySize); i++){
 			FsmStateTable[0][i] = fsmState;
+		}
 	}
 	else
 	{
 		for (int j = 0; j < btbSize; j++)
 		{
-			for (int i = 0; i < pow(2, historySize); i++)
-				FsmStateTable[j][i] = 1;
+			for (int i = 0; i < pow(2, historySize); i++){
+				FsmStateTable[j][i] = fsmState;
+			}
 		}
 	}
 }
@@ -110,7 +113,7 @@ public:
 		this->isGlobalTable = isGlobalTable;
 		this->isGlobalHist = isGlobalHist;
 		this->Shared = Shared;
-		this->fsmDefault = fsmDefault;
+		this->fsmDefault = fsmState;
 		totalSize = calcTotalSize(btbSize, historySize, tagSize,
 								  isGlobalHist, isGlobalTable);
 
@@ -178,14 +181,18 @@ public:
 			}
 		}
 	}
-	bool predict(uint32_t pc, uint32_t *dst)
+	unsigned calcBtbIndex(uint32_t pc)
 	{
 		unsigned btb_index = pc;
-		unsigned fsmNum = 0;
-		unsigned shareValue = 0;
-		unsigned fsmCurrentState = 0;
 		btb_index = btb_index >> 2;					   //remove 2 bits for allignment
 		btb_index = btb_index % (log_2_ciel(btbSize)); //take only bits needed for btb entry decision.
+		return btb_index;
+	}
+	unsigned calcFsmIndex(uint32_t pc)
+	{
+		unsigned shareValue = 0;
+		unsigned fsmNum = 0;
+		unsigned btb_index = calcBtbIndex(pc);
 
 		if (Shared == 1)
 		{											//using_lsb_share
@@ -196,19 +203,6 @@ public:
 		{															   //using_mid_share
 			shareValue = pc >> 16;									   //remove 16 lower bits.
 			shareValue = shareValue % (unsigned(pow(2, historySize))); //take the lowest |history| bits
-		}
-		printf("btb index is: %d ' valid? = %d \n", btb_index, btbTable[btb_index].valid);
-
-		if (btbTable[btb_index].valid == 0 || btbTable[btb_index].tag != getTagFromPc(pc))
-		{ //check if entry is valid
-		printf("adding new btb entry for: %d \n", pc);
-			*dst = pc + 4;
-			 //TODO: do we replace btb entry with new brach if they have a different tag ??
-			
-
-			addBtbEntry(getTagFromPc(pc), dst, btb_index);
-			return false;
-			//TODO: update btb table
 		}
 
 		if (isGlobalHist) //lookup history for branch
@@ -224,6 +218,28 @@ public:
 		if (Shared > 0)
 		{ //xor shared bits with history
 			fsmNum = fsmNum ^ shareValue;
+		}
+
+		return fsmNum;
+	}
+
+	bool predict(uint32_t pc, uint32_t *dst)
+	{
+		unsigned btb_index = calcBtbIndex(pc);
+		unsigned fsmNum = calcFsmIndex(pc);
+		unsigned fsmCurrentState = 0;
+
+		//printf("btb index is: %d ' valid? = %d \n", btb_index, btbTable[btb_index].valid);
+
+		if (btbTable[btb_index].valid == 0 || btbTable[btb_index].tag != getTagFromPc(pc))
+		{ //check if entry is valid
+			//printf("adding new btb entry for: 0x%x \n", pc);
+			*dst = pc + 4;
+			//TODO: do we replace btb entry with new brach if they have a different tag ??
+
+			addBtbEntry(getTagFromPc(pc), dst, btb_index);
+			return false;
+			//TODO: update btb table
 		}
 
 		if (isGlobalTable) //lookup fsm current state for branch + history
@@ -248,6 +264,55 @@ public:
 			*dst = pc + 4;
 			return false;
 		}
+	}
+
+	void update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst)
+	{
+		unsigned btb_index = calcBtbIndex(pc);
+		unsigned fsm_index = calcFsmIndex(pc);
+
+		if (isGlobalTable) //update fsm table
+		{
+			//printf("fsm state was: %d \n", FsmStateTable[0][fsm_index]);
+			if (FsmStateTable[0][fsm_index] < 3 && taken)
+				FsmStateTable[0][fsm_index]++;
+
+			if (FsmStateTable[0][fsm_index] > 0 && !taken)
+				FsmStateTable[0][fsm_index]--;
+			printf("fsm state is now: %d \n", FsmStateTable[0][fsm_index]);
+		}
+
+		else
+		{
+			//printf("fsm state was: %d \n", FsmStateTable[btb_index][fsm_index]);
+
+			if (FsmStateTable[btb_index][fsm_index] < 3 && taken)
+				FsmStateTable[btb_index][fsm_index]++;
+
+			if (FsmStateTable[btb_index][fsm_index] > 0 && !taken)
+				FsmStateTable[btb_index][fsm_index]--;
+			printf("fsm state is now: %d \n", FsmStateTable[btb_index][fsm_index]);
+		}
+
+		if (isGlobalHist)
+		{
+			historyTable[0] = historyTable[0] << 1;						  //move one bit left
+			historyTable[0] += int(taken);								  //update lsb
+			historyTable[0] = historyTable[0] % int(pow(2, historySize)); // cut msb out of history.
+			printf("global history is now: %d \n", historyTable[0]);
+		}
+		else
+		{
+			historyTable[btb_index] = historyTable[0] << 1;						  //move one bit left
+			historyTable[btb_index] += int(taken);								  //update lsb
+			historyTable[btb_index] = historyTable[0] % int(pow(2, historySize)); // cut msb out of history.
+			printf("local branch history is now: %d \n", historyTable[btb_index]);
+		}
+
+		if(taken){
+			btbTable[btb_index].target=targetPc;
+		}
+		//TODO: add target pc
 	}
 };
 
@@ -279,13 +344,12 @@ int BP_init(unsigned btbSize, unsigned historySize, unsigned tagSize,
 
 bool BP_predict(uint32_t pc, uint32_t *dst)
 {
-	unsigned btb_entry = pc;
-
 	return global_branch_pred->predict(pc, dst);
 }
 
 void BP_update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst)
 {
+	global_branch_pred->update(pc, targetPc, taken, pred_dst);
 	return;
 }
 
