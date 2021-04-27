@@ -3,6 +3,8 @@
 //#define __cplusplus
 #include "bp_api.hpp"
 #include "math.h"
+#include <stdio.h>
+
 
 #define VALID_BIT 1
 #define TARGET_SIZE 30
@@ -272,8 +274,7 @@ int BP_init(unsigned btbSize, unsigned historySize, unsigned tagSize,
 bool BP_predict(uint32_t pc, uint32_t *dst)
 {
 	unsigned btb_entry = pc;
-	pc = pc >> 2;										   //remove 2 bits for allignment
-	pc = pc % 2 ^ log_2_ciel(global_branch_pred->btbSize); //take only bits needed for btb entry decision.
+	
 	return global_branch_pred->predict(pc, dst);
 }
 
