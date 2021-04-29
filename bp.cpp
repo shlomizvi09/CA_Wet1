@@ -8,20 +8,23 @@
 #define VALID_BIT 1
 #define TARGET_SIZE 30
 
-void initFsmTable(unsigned btbSize, unsigned fsmState, bool isGlobalTable, bool historySize, unsigned **FsmStateTable)
+void initFsmTable(unsigned btbSize, unsigned fsmState, bool isGlobalTable, unsigned historySize, unsigned **FsmStateTable)
 {
 	//printf("in initFsmTable function. initializing all values to: %d \n", fsmState);
 	if (isGlobalTable)
 	{
-		for (int i = 0; i < pow(2, historySize); i++){
+		for (int i = 0; i < pow(2, historySize); i++)
+		{
 			FsmStateTable[0][i] = fsmState;
+			//printf("init fsmEntry[%d] to %u  ------ historySize= %d\n ",i, FsmStateTable[0][i],  historySize );
 		}
 	}
 	else
 	{
 		for (int j = 0; j < btbSize; j++)
 		{
-			for (int i = 0; i < pow(2, historySize); i++){
+			for (int i = 0; i < pow(2, historySize); i++)
+			{
 				FsmStateTable[j][i] = fsmState;
 			}
 		}
@@ -209,11 +212,13 @@ public:
 		{
 			fsmNum = historyTable[0];
 		}
+		
 
 		else
 		{
 			fsmNum = historyTable[btb_index];
 		}
+		//printf("history[0] is: %d, calculated fsm entry: %d\n",historyTable[0], fsmNum);
 
 		if (Shared > 0)
 		{ //xor shared bits with history
@@ -234,9 +239,8 @@ public:
 		if (btbTable[btb_index].valid == 0 || btbTable[btb_index].tag != getTagFromPc(pc))
 		{ //check if entry is valid
 			//printf("adding new btb entry for: 0x%x \n", pc);
-			*dst = pc + 4;
 			//TODO: do we replace btb entry with new brach if they have a different tag ??
-
+			*dst = pc + 4;
 			addBtbEntry(getTagFromPc(pc), dst, btb_index);
 			return false;
 			//TODO: update btb table
@@ -251,7 +255,6 @@ public:
 		{
 			fsmCurrentState = FsmStateTable[btb_index][fsmNum];
 		}
-
 		if (fsmCurrentState > 1)
 		{
 
@@ -274,12 +277,14 @@ public:
 		if (isGlobalTable) //update fsm table
 		{
 			//printf("fsm state was: %d \n", FsmStateTable[0][fsm_index]);
+			//printf("fsm state before update is: %d for fsm entry: %d .", FsmStateTable[0][fsm_index], fsm_index);
+
 			if (FsmStateTable[0][fsm_index] < 3 && taken)
 				FsmStateTable[0][fsm_index]++;
 
 			if (FsmStateTable[0][fsm_index] > 0 && !taken)
 				FsmStateTable[0][fsm_index]--;
-			printf("fsm state is now: %d \n", FsmStateTable[0][fsm_index]);
+			//printf("fsm state is now: %d \n", FsmStateTable[0][3]);
 		}
 
 		else
@@ -309,8 +314,9 @@ public:
 			printf("local branch history is now: %d \n", historyTable[btb_index]);
 		}
 
-		if(taken){
-			btbTable[btb_index].target=targetPc;
+		if (taken)
+		{
+			btbTable[btb_index].target = targetPc;
 		}
 		//TODO: add target pc
 	}
