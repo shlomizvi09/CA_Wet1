@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "bp_api.hpp"
+#include "bp_api.h"
 
 int main(int argc, char **argv) {
 
@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Usage: %s <trace filename>\n", argv[0]);
 		exit(1);
 	}
-
+	
 	FILE *trace = fopen(argv[1], "r");
 	if (trace == 0) {
 		fprintf(stderr, "cannot open trace file\n");
@@ -71,7 +71,6 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Error in input file: cannot read config\n");
 		exit(7);
 	}
-
 	if (BP_init(btbSize, historySize, tagSize,fsmState, isGlobalHist,
 			isGlobalTable, Shared) < 0) {
 		fprintf(stderr, "Predictor init failed\n");
@@ -107,7 +106,6 @@ int main(int argc, char **argv) {
 
 		BP_update(pc, targetPc, taken, dst);
 	}
-
 	SIM_stats stats;
 	BP_GetStats(&stats);
 	printf("flush_num: %d, br_num: %d, size: %db\n", stats.flush_num, stats.br_num, stats.size);

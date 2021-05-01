@@ -1,7 +1,7 @@
 /* 046267 Computer Architecture - Spring 2020 - HW #1 */
 /* This file should hold your implementation of the predictor simulator */
 //#define __cplusplus
-#include "bp_api.hpp"
+#include "bp_api.h"
 #include "math.h"
 #include <stdio.h>
 
@@ -35,7 +35,7 @@ unsigned log_2_ciel(unsigned x)
 {
 
 	int res = 0;
-	while (pow(2, res) <= x)
+	while (pow(2, res) < x)
 	{
 		res++;
 	}
@@ -45,7 +45,7 @@ unsigned log_2_ciel(unsigned x)
 int calcTotalSize(unsigned btbSize, unsigned historySize, unsigned tagSize,
 				  bool isGlobalHist, bool isGlobalTable)
 {
-	int retval = btbSize * (VALID_BIT + TARGET_SIZE + tagSize);
+	int retval = btbSize * (TARGET_SIZE + tagSize);
 	if (!isGlobalHist)
 	{
 		retval += btbSize * historySize;
@@ -169,7 +169,10 @@ public:
 	unsigned calcBtbIndex(uint32_t pc)
 	{
 		unsigned btb_index = pc >> 2;			   //remove 2 bits for allignment
+		// fprintf(stderr, "pc=0x%x, log_2_ciel(btbSize) = %d\n", pc, log_2_ciel(btbSize));
+
 		btb_index = btb_index % unsigned(pow(2, log_2_ciel(btbSize))); //take only bits needed for btb entry decision.
+		// fprintf(stderr, "pow = %d\n", unsigned(pow(2, log_2_ciel(btbSize))));
 		return btb_index;
 	}
 	unsigned calcFsmIndex(uint32_t pc)
@@ -238,7 +241,7 @@ public:
 		unsigned btb_index = calcBtbIndex(pc);
 		unsigned fsm_index = calcFsmIndex(pc);
 
-		if (targetPc != pred_dst){
+		if (((targetPc != pred_dst) && taken) || ((targetPc == pred_dst) && !taken)){
 			this->stats.flush_num++;
 		}
 
@@ -308,5 +311,8 @@ void BP_update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst)
 
 void BP_GetStats(SIM_stats *curStats)
 {
+	curStats->br_num = global_branch_pred->stats.br_num;
+	curStats->flush_num = global_branch_pred->stats.flush_num;
+	curStats->size = global_branch_pred->stats.size;
 	return;
 }
