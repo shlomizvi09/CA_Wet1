@@ -148,6 +148,21 @@ public:
 
 		initFsmTable(btbSize, fsmState, isGlobalTable, historySize, FsmStateTable);
 	}
+	~BranchPred(){ // free all the memory
+		delete historyTable;
+
+		if (isGlobalTable){
+			delete *FsmStateTable;
+			delete FsmStateTable;
+		} else{
+			for (unsigned i = 0; i < btbSize; i++)
+			{
+				delete FsmStateTable[i];
+			}
+			delete FsmStateTable;
+		}
+
+	}
 	void addBtbEntry(uint32_t tag, uint32_t targetPc, int btb_index)
 	{
 		btbTable[btb_index].tag = tag;
@@ -314,5 +329,6 @@ void BP_GetStats(SIM_stats *curStats)
 	curStats->br_num = global_branch_pred->stats.br_num;
 	curStats->flush_num = global_branch_pred->stats.flush_num;
 	curStats->size = global_branch_pred->stats.size;
+	delete global_branch_pred; // BP_GetStats is called once, at the end. we need to free the allocated memory
 	return;
 }
