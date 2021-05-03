@@ -254,18 +254,22 @@ public:
 	void update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst)
 	{
 		unsigned btb_index = calcBtbIndex(pc);
+		if (btbTable[btb_index].valid == 0 || btbTable[btb_index].tag != getTagFromPc(pc)) //check if entry is valid
+		{ 
+			addBtbEntry(getTagFromPc(pc), targetPc, btb_index);
+		}
 		unsigned fsm_index = calcFsmIndex(pc);
 
-		if (((targetPc != pred_dst) && taken) || ((targetPc == pred_dst) && !taken)){
+		btbTable[btb_index].target = targetPc;
+
+		unsigned real_instruction = (taken) ? targetPc : pc + 4;
+
+		if (real_instruction != pred_dst){
 			this->stats.flush_num++;
 		}
 
 		this->stats.br_num++;
 
-		if (btbTable[btb_index].valid == 0 || btbTable[btb_index].tag != getTagFromPc(pc)) //check if entry is valid
-		{ 
-			addBtbEntry(getTagFromPc(pc), targetPc, btb_index);
-		}
 
 		if (isGlobalTable) //update fsm table
 		{
