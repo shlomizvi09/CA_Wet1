@@ -2,7 +2,7 @@
 /* This file should hold your implementation of the predictor simulator */
 //#define __cplusplus
 #include "bp_api.h"
-#include "math.h"
+#include <cmath>
 #include <stdio.h>
 
 #define VALID_BIT 1
