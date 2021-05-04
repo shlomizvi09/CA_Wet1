@@ -45,7 +45,7 @@ unsigned log_2_ciel(unsigned x)
 int calcTotalSize(unsigned btbSize, unsigned historySize, unsigned tagSize,
 				  bool isGlobalHist, bool isGlobalTable)
 {
-	int retval = btbSize * (TARGET_SIZE + tagSize);
+	int retval = btbSize * (VALID_BIT + TARGET_SIZE + tagSize);
 	if (!isGlobalHist)
 	{
 		retval += btbSize * historySize;
